@@ -1,0 +1,129 @@
+.turnover-container {
+  height: 280px;
+  width: 400px;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.month-container {
+  flex-basis: calc(100% / 12);
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+.prev, .cur {
+  flex-basis: 50%;
+  height: 250px;
+  position: relative;
+}
+
+.label {
+  flex-basis: 100%;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 400;
+  color: #3C2E63;
+}
+
+.bar {
+  border-radius: 20px;
+  width: 13px;
+  position: absolute;
+  bottom: 0;
+  z-index: 10;
+  transition: height 1s ease-in-out;
+}
+
+.bar.prev {
+  right: 0;
+  background-color: #BACDFD;
+}
+
+.bar.cur {
+  left: 0;
+  background-color: #486EEE;
+}
+
+.percentage {
+  position: absolute;
+  top: -10px;
+  right: -5px;
+  width: 37px;
+  height: 37px;
+  border-radius: 50%;
+  background-color: #486EEE;
+  text-align: center;
+  line-height: 39px;
+  color: #fff;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 12px;
+  text-align: center;
+}
+
+.in-progress {
+  background-color: #8BFFA5;
+  color: #486EEE;
+  display: flex;
+  align-items: center;
+}
+
+.percentage::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #486EEE;
+}
+
+.in-progress::after {
+  border-top: 5px solid #8BFFA5;
+}
+
+.percentage::before {
+  content: "";
+  position: absolute;
+  bottom: -220px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 220px;
+  background-color: #486EEE;
+  z-index: 9;
+}
+
+.in-progress::before {
+  background-color: #8BFFA5;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.inprogress-image {
+  margin: auto;
+  height: 24px;
+  width: 24px;
+  animation: spin 6s linear infinite;
+}
+
+.inprogress-text {
+  font-weight: 500;
+  position: absolute;
+  white-space: nowrap;
+  left: 50%;
+  transform: translateX(-50%);
+  top: -35px;
+}

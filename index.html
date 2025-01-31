@@ -1,11 +1,133 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello</title>
-</head>
-<body>
-    <p1>Hi there</p1>
-</body>
-</html>
+<div class="turnover-container">
+    <div class="month-container jan">
+        <div class="jan prev"></div>
+        <div class="jan cur"></div>
+        <div class="jan label">Jan</div>
+    </div>
+    <div class="month-container feb">
+        <div class="feb prev"></div>
+        <div class="feb cur"></div>
+        <div class="feb label">Feb</div>
+    </div>
+    <div class="month-container mar">
+        <div class="mar prev"></div>
+        <div class="mar cur"></div>
+        <div class="mar label">Mar</div>
+    </div>
+    <div class="month-container apr">
+        <div class="apr prev"></div>
+        <div class="apr cur"></div>
+        <div class="apr label">Apr</div>
+    </div>
+    <div class="month-container may">
+        <div class="may prev"></div>
+        <div class="may cur"></div>
+        <div class="may label">May</div>
+    </div>
+    <div class="month-container jun">
+        <div class="jun prev"></div>
+        <div class="jun cur"></div>
+        <div class="jun label">Jun</div>
+    </div>
+    <div class="month-container jul">
+        <div class="jul prev"></div>
+        <div class="jul cur"></div>
+        <div class="jul label">Jul</div>
+    </div>
+    <div class="month-container aug">
+        <div class="aug prev"></div>
+        <div class="aug cur"></div>
+        <div class="aug label">Aug</div>
+    </div>
+    <div class="month-container sep">
+        <div class="sep prev"></div>
+        <div class="sep cur"></div>
+        <div class="sep label">Sep</div>
+    </div>
+    <div class="month-container oct">
+        <div class="oct prev"></div>
+        <div class="oct cur"></div>
+        <div class="oct label">Oct</div>
+    </div>
+    <div class="month-container nov">
+        <div class="nov prev"></div>
+        <div class="nov cur"></div>
+        <div class="nov label">Nov</div>
+    </div>
+    <div class="month-container dec">
+        <div class="dec prev"></div>
+        <div class="dec cur"></div>
+        <div class="dec label">Dec</div>
+    </div>
+</div>
+
+<script>
+  const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  const values = {};
+  const maxValue = 400;
+
+  for (let i = 0; i < months.length; i++) {
+    const month = months[i];
+    const monthContainer = document.getElementsByClassName(`month-container ${month}`)[0];
+    const prevElement = document.getElementsByClassName(`${month}-prev`)[0];
+    const prevBarContainer = document.getElementsByClassName(`${month} prev`)[0];
+    const curElement = document.getElementsByClassName(`${month}-cur`)[0];
+    const curBarContainer = document.getElementsByClassName(`${month} cur`)[0];
+    const prevValue = prevElement.querySelector('.jet-listing-dynamic-field__content').textContent;
+    const curValue = curElement.querySelector('.jet-listing-dynamic-field__content').textContent;
+    values[`${month}PrevValue`] = prevValue;
+    values[`${month}CurValue`] = curValue;
+
+    if (prevValue && curValue) {
+      createBarElement(prevBarContainer, prevValue, 'prev');
+      createBarElement(curBarContainer, curValue, 'cur');
+      createPercentageElement(monthContainer, prevValue, curValue, i);
+    } else if (prevValue && !curValue) {
+      createBarElement(prevBarContainer, prevValue, 'prev');
+      createBarInProgress(curBarContainer, prevValue, 'cur');
+      createPercentageInProgress(monthContainer, i);
+    }
+  }
+
+  function createBarElement(parentElement, value, type) {
+    const barElement = document.createElement('div');
+    barElement.classList.add('bar', type);
+    const height = 180 / maxValue * value;
+    barElement.style.height = `${height}px`; // Set the height of the bar
+    parentElement.appendChild(barElement);
+  }
+
+  function createBarInProgress(parentElement, value, type) {
+    const barElement = document.createElement('div');
+    barElement.classList.add('bar', type);
+    const height = 180 / maxValue * value / 2;
+    barElement.style.height = `${height}px`; // Set the height of the bar
+    parentElement.appendChild(barElement);
+  }
+
+  function createPercentageElement(parentElement, prevValue, curValue, index) {
+    const percentageElement = document.createElement('div');
+    percentageElement.classList.add('percentage');
+    const percentageChange = ((curValue - prevValue) / prevValue) * 100;
+    const roundedPercentage = Math.ceil(percentageChange);
+    const sign = roundedPercentage >= 0 ? '+' : '-';
+    percentageElement.textContent = `${sign}${Math.abs(roundedPercentage)}%`;
+    percentageElement.style.top = `${-10 + (index % 2) * 20}px`; // Apply staggered offset
+    parentElement.appendChild(percentageElement);
+  }
+
+  function createPercentageInProgress(parentElement, index) {
+    const percentageElement = document.createElement('div');
+    percentageElement.classList.add('percentage', 'in-progress');
+    percentageElement.style.top = `${-10 + (index % 2) * 20}px`; // Apply staggered offset
+    parentElement.appendChild(percentageElement);
+    const imageElement = document.createElement('img');
+    imageElement.src = 'http://ecommspace-130524.local/wp-content/uploads/2023/05/loader.svg';
+    imageElement.classList.add('inprogress-image');
+    percentageElement.appendChild(imageElement);
+    const textElement = document.createElement('div');
+    textElement.textContent = 'In Progress';
+    textElement.classList.add('inprogress-text');
+    percentageElement.appendChild(textElement);
+  }
+</script>

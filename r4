@@ -1,0 +1,109 @@
+
+The error message you're encountering indicates two primary issues with your MongoDB model schema in relation to the data you're trying to store:
+
+1. **`image_url` Type Mismatch**: The `image_url` is expected to be a `String` in your model, but the data being stored is an Object. 
+2. **`count` Missing**: The error suggests that the `count` field is required but it might not be provided for all entries, specifically for any categories that might not have a `count` field.
+
+### Correcting the Schema Definition
+
+To fix these issues, you should adjust your `auchancategorySchema` to properly reflect the data structure:
+
+```javascript
+const mongoose = require("mongoose");
+
+const auchancategorySchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true }, // Ensure 'id' is unique
+  title: { type: String, required: true },
+  count: { type: Number, required: false }, // Make 'count' not required if it might not exist for all categories
+  children: [{ type: mongoose.Schema.Types.ObjectId, ref: "auchancategory", default: [] }], // Referencing the same model if children are categories themselves
+  description: { type: String, required: false },
+  image_url: { 
+    type: {
+      svg: { type: String, required: false },
+      png: { type: String, required: false },
+      main_category_preview: { type: String, required: false }
+    }, 
+    required: false 
+  }, // Define 'image_url' as an object with string fields
+  excisable: { type: Boolean, required: false },
+  is_popular: { type: Boolean, required: false },
+  is_collection: { type: Boolean, required: false },
+  parent_id: { type: mongoose.Schema.Types.ObjectId, ref: "auchancategory", required: false } // Referencing the same model for parent-child relationships
+}, { timestamps: true });
+
+module.exports = mongoose.model("auchancategory", auchancategorySchema);
+```
+
+### Updating the Data Handling Function
+
+You also need to ensure your data handling function (`saveDataToMongoDB`) supports the nested object structure for `image_url` and handles cases where `count` might not be available:
+
+```javascript
+const saveDataToMongoDB = async (data, parentId = null) => {
+  try {
+    if (!Array.isArray(data)) {
+      throw new Error("Data is not an array");
+    }
+
+    for (const item of data) {
+      if (!item.id) {
+        console.error("ID is required");
+        continue;
+      }
+
+      if (!item.title) {
+        console.error("Title is required");
+        continue;
+      }
+
+      if (parentId) {
+        item.parent_id = parentId;
+      }
+
+      let childrenIds = [];
+      if (item.children && item.children.length > 0) {
+        const children = await saveDataToMongoDB(item.children, item.id);
+        childrenIds = children.map(child => child.id);
+      }
+
+      item.children = childrenIds;
+
+      const existingCategory = await Category.findOne({ id: item.id });
+      if (existingCategory) {
+        console.warn(`Skipping existing category with ID: ${item.id}`);
+        continue;
+      }
+
+      const newCategory = new Category({
+        id: item.id,
+        title: item.title,
+        count: item.count || 0, // Use 0 or another default if count is not provided
+        children: item.children,
+        description: item.description || "", // Default to empty string if not provided
+        image_url: item.image_url || {}, // Default to empty object if not provided
+        excisable: item.excisable || false,
+        is_popular: item.is_popular || false,
+        is_collection: item.is_collection || false,
+        parent_id: item.parent_id
+      });
+
+      await newCategory.save();
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error saving data to MongoDB:", error);
+    throw error;
+  }
+};
+```
+
+### Verifying Data Integrity
+
+Make sure that the data passed to `saveDataToMongoDB` indeed follows the expected structure, particularly that:
+
+- `count` should be a number if it exists.
+- `image_url` should be an object or be omitted if not available.
+- Nested objects and arrays are handled appropriately according to the schema definition.
+
+After making these adjustments, your application should be able to handle the provided data correctly without errors regarding type mismatches or missing required fields. Make sure to restart your application to apply these changes effectively.

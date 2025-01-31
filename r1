@@ -1,7 +1,118 @@
+The error you're encountering suggests that the `image_url` field in your schema needs to be updated to accommodate an object with multiple properties (`svg`, `png`, and `main_category_preview`). Additionally, ensure that all required fields, such as `count`, are properly handled. 
 
+Here's how you can update your `auchancategorySchema` and the `saveDataToMongoDB` function to properly handle the `image_url` field and the `count` field:
 
-4/7
-The response provides changes to achieve staggering logic, however, it does so in snippets and does not provide the solution in full needed by the system instruction.
+### Updated Schema
 
-4/7
-The response provides the full JavaScript and CSS code, however does not include the HTML. Since the HTML is missing, the response does not adhere to the system instruction of providing complete instructions. There are no issues with the responses tone nor formatting.
+Update the `auchancategorySchema` to handle `image_url` as an object with subfields:
+
+```javascript
+const mongoose = require("mongoose");
+
+// Define the schema for your MongoDB model
+const auchancategorySchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true, unique: false },
+    title: { type: String, required: true, unique: false },
+    count: { type: Number, required: true, unique: false },
+    children: [
+      { type: mongoose.Schema.Types.Mixed, ref: "Category", default: [] },
+    ],
+    description: { type: String, required: false, unique: false },
+    image_url: {
+      svg: { type: String, required: false, unique: false },
+      png: { type: String, required: false, unique: false },
+      main_category_preview: { type: String, required: false, unique: false }
+    },
+    excisable: { type: Boolean, required: false, unique: false },
+    is_popular: { type: Boolean, required: false, unique: false },
+    is_collection: { type: Boolean, required: false, unique: false },
+    parent_id: { type: String, required: false, unique: false },
+  },
+  { timestamps: true }
+);
+
+// Create and export the model
+module.exports = mongoose.model("auchancategory", auchancategorySchema);
+```
+
+### Updated `saveDataToMongoDB` Function
+
+Ensure that the `image_url` field is handled properly in the `saveDataToMongoDB` function:
+
+```javascript
+const saveDataToMongoDB = async (data, parentId = null) => {
+  try {
+    if (!Array.isArray(data)) {
+      throw new Error("Data is not an array");
+    }
+
+    for (const item of data) {
+      if (!item.id) {
+        console.error("ID is required");
+        continue;
+      }
+
+      if (!item.title) {
+        console.error("Title is required");
+        continue;
+      }
+
+      if (!item.count) {
+        console.error("Count is required");
+        continue;
+      }
+
+      if (parentId) {
+        item.parent_id = parentId;
+      }
+
+      let childrenIds = [];
+      if (item.children && item.children.length > 0) {
+        const children = await saveDataToMongoDB(item.children, item.id);
+        childrenIds = children.map((child) => child.id);
+      }
+
+      item.children = childrenIds;
+
+      const existingCategory = await Category.findOne({ id: item.id });
+      if (existingCategory) {
+        console.warn(`Skipping existing category with ID: ${item.id}`);
+        continue;
+      }
+
+      const newCategory = new Category({
+        id: item.id,
+        title: item.title,
+        count: item.count,
+        description: item.description,
+        image_url: item.image_url,
+        excisable: item.excisable,
+        is_popular: item.is_popular,
+        is_collection: item.is_collection,
+        parent_id: item.parent_id,
+        children: item.children
+      });
+
+      await newCategory.save();
+
+      const savedCategory = await Category.findOne({ id: item.id });
+      if (JSON.stringify(savedCategory) !== JSON.stringify(newCategory)) {
+        console.error(
+          `Saved data does not match source data for item with ID: ${item.id}`
+        );
+      }
+    }
+
+    return data;
+  } catch (error) {
+    throw new Error(`Error saving data to MongoDB: ${error}`);
+  }
+};
+```
+
+### Testing the API
+
+With these changes, you should be able to run your API and correctly parse and save the data from the given URL. Ensure that your MongoDB instance is running and that the connection is correctly configured. Then, execute the API call to `http://localhost:8000/api/auchan/fetch-category` and verify the data is saved as expected.
+
+If there are further issues, inspect the data being passed to the `saveDataToMongoDB` function and ensure it matches the expected schema structure. Use `console.log(item)` inside the loop to debug and see the exact data structure being processed.
